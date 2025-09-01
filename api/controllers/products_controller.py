@@ -3,6 +3,7 @@ from fastapi.security import OAuth2AuthorizationCodeBearer
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 from api.dtos.product_dto import ProductDTO
+from api.dtos.search_response_dto import SearchResponseDTO
 from application.use_cases.search_products import SearchProductsUseCase
 from config.vars import AUTH_URL, TOKEN_URL
 from infrastructure.auth.keycloak_client import KeycloakClient
@@ -29,7 +30,8 @@ async def require_role(token: str = Security(oauth2_scheme), role: str = "optima
         raise HTTPException(HTTP_401_UNAUTHORIZED, detail=str(e)) from e
 
 
-@router.get("/search", response_model=list[ProductDTO], summary="Search products by term")
+@router.get("/search", response_model=SearchResponseDTO, summary="Search products by term")
 async def search_products(term: str, _: dict = Depends(require_role)):
     result = use_case.execute(term)
-    return [ProductDTO(**p.model_dump()) for p in result.items]
+    products = [ProductDTO(**p.model_dump()) for p in result.items]
+    return SearchResponseDTO(products=products)
