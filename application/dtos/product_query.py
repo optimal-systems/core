@@ -11,6 +11,7 @@ class ProductResponse(BaseModel):
     image: str | None
     price: float
     price_per_unit: str | None
+    supermarket: str
 
 
 class SearchProductsResponse(BaseModel):

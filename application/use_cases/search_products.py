@@ -10,7 +10,14 @@ class SearchProductsUseCase:
         products = self._repo.search_by_term(term)
         return SearchProductsResponse(
             items=[
-                ProductResponse(name=p.name, url=p.url, image=p.image, price=p.price, price_per_unit=p.price_per_unit)
+                ProductResponse(
+                    name=p.name,
+                    url=p.url,
+                    image=p.image,
+                    price=p.price,
+                    price_per_unit=p.price_per_unit,
+                    supermarket=p.supermarket,
+                )
                 for p in products
             ]
         )

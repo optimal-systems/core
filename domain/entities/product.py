@@ -8,3 +8,4 @@ class Product:
     image: str | None
     price: float
     price_per_unit: str | None
+    supermarket: str
