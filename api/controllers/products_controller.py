@@ -3,7 +3,7 @@ from fastapi.security import OAuth2AuthorizationCodeBearer
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 from api.dtos.product_dto import ProductDTO
-from application.dtos.product_query import ProductResponse, SearchProductsResponse
+from application.use_cases.list_products import ListProductsUseCase
 from application.use_cases.search_products import SearchProductsUseCase
 from config.vars import AUTH_URL, TOKEN_URL
 from domain.repositories.product_repository import ProductRepository
@@ -15,7 +15,8 @@ router = APIRouter(prefix="/api/products", tags=["products"])
 oauth2_scheme = OAuth2AuthorizationCodeBearer(authorizationUrl=AUTH_URL, tokenUrl=TOKEN_URL, auto_error=False)
 
 kc = KeycloakClient()
-use_case = SearchProductsUseCase(PostgresProductRepository())
+search_products_use_case = SearchProductsUseCase(PostgresProductRepository())
+list_products_use_case = ListProductsUseCase(PostgresProductRepository())
 
 
 async def require_role(token: str = Security(oauth2_scheme), role: str = "optimal_reader"):
@@ -54,7 +55,7 @@ async def search_products(
     offset = (page - 1) * pagesize
 
     # Get paginated results
-    result = use_case.execute(term, offset=offset, limit=pagesize)
+    result = search_products_use_case.execute(term, offset=offset, limit=pagesize)
     products = [ProductDTO(**p.model_dump()) for p in result.items]
 
     # Calculate has_more
@@ -63,7 +64,7 @@ async def search_products(
     # Get total if requested
     total = None
     if include_total:
-        total_result = use_case.execute(term, offset=0, limit=None)
+        total_result = search_products_use_case.execute(term, offset=0, limit=None)
         total = len(total_result.items)
 
     # Build response excluding None fields
@@ -79,49 +80,6 @@ async def search_products(
         response_data["total"] = total
 
     return response_data
-
-
-class ListProductsUseCase:
-    def __init__(self, repo: ProductRepository):
-        self._repo = repo
-
-    def execute(
-        self,
-        offset: int = 0,
-        limit: int | None = None,
-        supermarket: str | None = None,
-        sort_by: str = "name",
-        sort_order: str = "asc",
-    ) -> SearchProductsResponse:
-        # For now we use the same method from the repository
-        # In the future you could create a specific method to list
-        products = self._repo.search_by_term("", offset=offset, limit=limit)
-
-        # Apply filters
-        if supermarket:
-            products = [p for p in products if p.supermarket == supermarket]
-
-        # Apply sorting
-        if sort_by == "name":
-            products.sort(key=lambda x: x.name, reverse=(sort_order == "desc"))
-        elif sort_by == "price":
-            products.sort(key=lambda x: x.price, reverse=(sort_order == "desc"))
-        elif sort_by == "supermarket":
-            products.sort(key=lambda x: x.supermarket, reverse=(sort_order == "desc"))
-
-        return SearchProductsResponse(
-            items=[
-                ProductResponse(
-                    name=p.name,
-                    url=p.url,
-                    image=p.image,
-                    price=p.price,
-                    price_per_unit=p.price_per_unit,
-                    supermarket=p.supermarket,
-                )
-                for p in products
-            ]
-        )
 
 
 @router.get("/", summary="List products for dashboard")
@@ -160,7 +118,7 @@ async def list_products(
 
     # Get products (use a different use case or the same with parameters)
     # For now we use the same use case but with an empty term to get all products
-    result = use_case.execute("", offset=offset, limit=pagesize)
+    result = list_products_use_case.execute("", offset=offset, limit=pagesize)
     products = [ProductDTO(**p.model_dump()) for p in result.items]
 
     # Apply filters and sorting
@@ -181,7 +139,7 @@ async def list_products(
     # Get total if requested
     total = None
     if include_total:
-        total_result = use_case.execute("", offset=0, limit=None)
+        total_result = list_products_use_case.execute("", offset=0, limit=None)
         total = len(total_result.items)
 
     # Build response
