@@ -6,7 +6,6 @@ from api.dtos.product_dto import ProductDTO
 from application.use_cases.list_products import ListProductsUseCase
 from application.use_cases.search_products import SearchProductsUseCase
 from config.vars import AUTH_URL, TOKEN_URL
-from domain.repositories.product_repository import ProductRepository
 from infrastructure.auth.keycloak_client import KeycloakClient
 from infrastructure.repositories.postgres_product_repository import PostgresProductRepository
 
