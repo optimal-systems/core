@@ -1,14 +1,19 @@
-import logging
-
 from domain.entities.product import Product
 from domain.repositories.product_repository import ProductRepository
 from infrastructure.database.postgres import execute_query
 
 
 class PostgresProductRepository(ProductRepository):
-    def search_by_term(self, term: str) -> list[Product]:
-        rows = execute_query("SELECT * FROM prod.search_products(%s);", (term,))
-        logging.debug(f"Rows: {rows[0]}")
+    def search_by_term(self, term: str, offset: int = 0, limit: int | None = None) -> list[Product]:
+        # Construir la consulta con paginación
+        if limit is not None:
+            query = "SELECT * FROM prod.search_products(%s) LIMIT %s OFFSET %s;"
+            params = (term, limit, offset)
+        else:
+            query = "SELECT * FROM prod.search_products(%s) OFFSET %s;"
+            params = (term, offset)
+
+        rows = execute_query(query, params)
         return [
             Product(
                 name=row["name"],

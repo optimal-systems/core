@@ -6,8 +6,8 @@ class SearchProductsUseCase:
     def __init__(self, repo: ProductRepository):
         self._repo = repo
 
-    def execute(self, term: str) -> SearchProductsResponse:
-        products = self._repo.search_by_term(term)
+    def execute(self, term: str, offset: int = 0, limit: int | None = None) -> SearchProductsResponse:
+        products = self._repo.search_by_term(term, offset=offset, limit=limit)
         return SearchProductsResponse(
             items=[
                 ProductResponse(
