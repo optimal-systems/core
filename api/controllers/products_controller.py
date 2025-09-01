@@ -16,7 +16,7 @@ kc = KeycloakClient()
 use_case = SearchProductsUseCase(PostgresProductRepository())
 
 
-async def require_role(token: str = Security(oauth2_scheme), role: str = None):
+async def require_role(token: str = Security(oauth2_scheme), role: str = "optimal_reader"):
     if not token:
         raise HTTPException(HTTP_401_UNAUTHORIZED, detail="Unauthorized")
     try:
