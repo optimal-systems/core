@@ -5,7 +5,7 @@ from infrastructure.database.postgres import execute_query
 
 class PostgresProductRepository(ProductRepository):
     def search_by_term(self, term: str, offset: int = 0, limit: int | None = None) -> list[Product]:
-        # Construir la consulta con paginación
+        # Build the query with pagination
         if limit is not None:
             query = "SELECT * FROM prod.search_products(%s) LIMIT %s OFFSET %s;"
             params = (term, limit, offset)

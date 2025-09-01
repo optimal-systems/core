@@ -14,8 +14,8 @@ class KeycloakClient:
 
     async def validate(self, token: str) -> dict[str, Any]:
         """
-        Valida y decodifica el JWT con JWKS (Keycloak 26.x).
-        Devuelve el payload si es válido o lanza JWTError.
+        Validate and decode the JWT with JWKS (Keycloak 26.x).
+        Return the payload if valid or raise JWTError.
         """
         async with httpx.AsyncClient() as client:
             resp = await client.get(self._jwks_url)
@@ -26,7 +26,7 @@ class KeycloakClient:
         kid = headers.get("kid")
         key_data = next((k for k in jwks["keys"] if k.get("kid") == kid), None)
         if not key_data:
-            raise JWTError("JWK no encontrado para kid")
+            raise JWTError("JWK not found for kid")
 
         public_key = jwk.construct(key_data).public_key()
 
