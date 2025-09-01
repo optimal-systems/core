@@ -141,7 +141,7 @@ async def list_products(
     # Get total if requested
     total = None
     if include_total:
-        total_result = list_products_use_case.execute("", offset=0, limit=None)
+        total_result = list_products_use_case.execute(offset=0, limit=None)
         total = len(total_result.items)
 
     # Build response
