@@ -14,15 +14,16 @@ class ListProductsUseCase:
         sort_by: str = "name",
         sort_order: str = "asc",
     ) -> SearchProductsResponse:
-        # Por ahora usamos el mismo método del repositorio
-        # En el futuro podrías crear un método específico para listar
-        products = self._repo.search_by_term("", offset=offset, limit=limit)
+        # select all products from the repository
+        products = self._repo.list_products(
+            offset=offset, limit=limit, supermarket=supermarket, sort_by=sort_by, sort_order=sort_order
+        )
 
-        # Aplicar filtros
+        # Apply filters
         if supermarket:
             products = [p for p in products if p.supermarket == supermarket]
 
-        # Aplicar ordenamiento
+        # Apply sorting
         if sort_by == "name":
             products.sort(key=lambda x: x.name, reverse=(sort_order == "desc"))
         elif sort_by == "price":

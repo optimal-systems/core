@@ -118,7 +118,9 @@ async def list_products(
 
     # Get products (use a different use case or the same with parameters)
     # For now we use the same use case but with an empty term to get all products
-    result = list_products_use_case.execute("", offset=offset, limit=pagesize)
+    result = list_products_use_case.execute(
+        offset=offset, limit=pagesize, supermarket=supermarket, sort_by=sort_by, sort_order=sort_order
+    )
     products = [ProductDTO(**p.model_dump()) for p in result.items]
 
     # Apply filters and sorting
@@ -148,8 +150,19 @@ async def list_products(
         "page": page,
         "pagesize": pagesize,
         "has_more": has_more,
-        "filters": {"supermarket": supermarket, "sort_by": sort_by, "sort_order": sort_order},
     }
+
+    # On include filters that are applied
+    filters = {}
+    if supermarket:
+        filters["supermarket"] = supermarket
+    if sort_by != "name":  # Only include if not the default value
+        filters["sort_by"] = sort_by
+    if sort_order != "asc":  # Only include if not the default value
+        filters["sort_order"] = sort_order
+
+    if filters:  # Only include the filters section if filters are applied
+        response_data["filters"] = filters
 
     # Only include total if requested
     if include_total and total is not None:
