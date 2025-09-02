@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Security
 from fastapi.security import OAuth2AuthorizationCodeBearer
+from jose.exceptions import JWTError
 from starlette.status import HTTP_401_UNAUTHORIZED, HTTP_403_FORBIDDEN
 
 from api.dtos.product_dto import ProductDTO
@@ -20,15 +21,21 @@ list_products_use_case = ListProductsUseCase(PostgresProductRepository())
 
 async def require_role(token: str = Security(oauth2_scheme), role: str = "optimal_reader"):
     if not token:
-        raise HTTPException(HTTP_401_UNAUTHORIZED, detail="Unauthorized")
+        raise HTTPException(HTTP_401_UNAUTHORIZED, detail="Token de autorización requerido")
     try:
         payload = await kc.validate(token)
         username, roles = kc.extract_username_and_roles(payload)
         if role not in roles:
-            raise HTTPException(HTTP_403_FORBIDDEN, detail="Unauthorized")
+            raise HTTPException(HTTP_403_FORBIDDEN, detail=f"Rol '{role}' requerido. Roles disponibles: {roles}")
         return {"username": username, "roles": roles}
-    except Exception as e:  # JWTError or others
-        raise HTTPException(HTTP_401_UNAUTHORIZED, detail=str(e)) from e
+    except JWTError as e:
+        # Error específico de JWT con más contexto
+        error_msg = f"Error de validación de token: {str(e)}"
+        raise HTTPException(HTTP_401_UNAUTHORIZED, detail=error_msg) from e
+    except Exception as e:
+        # Otros errores inesperados
+        error_msg = f"Error inesperado en autenticación: {str(e)}"
+        raise HTTPException(HTTP_401_UNAUTHORIZED, detail=error_msg) from e
 
 
 @router.get("/search", summary="Search products by term")
